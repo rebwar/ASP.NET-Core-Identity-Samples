@@ -7,20 +7,25 @@ using WebApplication6.Models;
 
 namespace WebApplication6.Infrastructures
 {
-    public class CustomPasswordValidator : IPasswordValidator<AppUser>
+    public class CustomPasswordValidator : PasswordValidator<AppUser>
     {
-        public Task<IdentityResult> ValidateAsync(UserManager<AppUser> manager, AppUser user, string password)
+        
+        
+
+        public override async Task<IdentityResult> ValidateAsync(UserManager<AppUser> manager, AppUser user, string password)
         {
-            IdentityError error = new IdentityError();
-            bool iserror = false;
+            IdentityResult result=await  base.ValidateAsync(manager, user, password);
+            List<IdentityError> errors = result.Succeeded ? new List<IdentityError>() : result.Errors.ToList();
             if (password.ToLower().Contains(user.UserName.ToLower()))
             {
-                error.Code = "PasswordContainsUserName";
-                error.Description = "Password cannot contain Username";
-                iserror = true;
-            }
+                errors.Add(new IdentityError
+                {
+                    Code = "PasswordContainsUserName",
+                     Description = "Password cannot contain Username"
 
-            return Task.FromResult(iserror ? IdentityResult.Failed(error) : IdentityResult.Success);
+            });
+            }
+            return errors.Count==0 ? IdentityResult.Success :IdentityResult.Failed(errors.ToArray())  ;
         }
     }
 }
